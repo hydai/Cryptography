@@ -1,0 +1,33 @@
+假若被 break 的 password 是 aPPlE0254,789034HAppy55
+則 Output file 的輸出格式如下:
+------------------------------------------
+aPPlE0254   在第 456    個sequence 被猜中
+789034HAppy55 在第 103256 個sequence 被猜中
+           .
+           .
+           .
+           .
+           .
+           .
+------------------------------------------
+ 
+猜了 OOOO 個 sequence
+猜中了 XXXX 個 password
+breaking rate : QQQQ  % 
+
+※ 必須列出所猜測的sequence 
+
+
+If the broken password is aPPlE0254,789034HAppy55,
+then the format of Output file should be as follow:
+------------------------------------------------------------
+aPPlE0254  is guessed at 456th sequence 
+789034HAppy55 is guessed at 103256th sequence
+           .
+           .
+           .
+           .
+           .
+           .
+------------------------------------------
+breaking rate : 89.9%
