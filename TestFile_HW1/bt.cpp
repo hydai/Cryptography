@@ -2,14 +2,15 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <cstdint>
 #include <string>
 #include <cctype>
 #include <set>
 #include <map>
 #include <vector>
 //#define DUMPINFO
+//#define StrFirst
 using namespace std;
+#define uint8_t unsigned char
 extern void md5(const uint8_t *, size_t, uint8_t *);
 void init(char *);
 void loadDic();
@@ -17,11 +18,13 @@ void dicdfs(char *, int, int);
 void dump();    //dump infomation to output file
 void loadAnsHash(char *);
 void btSimple(); // only test dictionary string
-void btExtend(int); // test with numbers
+void btExtend(int); // test with numbers but string first
+void btNumber(int); // test with numbers first
 long long int guessedNumber = 0;
 long long int hitNumber = 0;
-long long int totalNumber = 0;
+long long int totalNumber = 100;
 set<string> dicSet;
+set<string> dicSetSimple;
 set<string> ansSet;
 map<long long int, string> hitsMap;
 vector<string> tmpDicV;
@@ -62,7 +65,11 @@ int main(int argc, char *argv[])
     printf("Load dictionary consumes %lf s!\n", (double)(end-start)/CLOCKS_PER_SEC);
     start = clock();
     //btSimple();
+#ifdef StrFirst
     btExtend(3);
+#else
+    btNumber(100);
+#endif
     end = clock();
     printf("Running time consumes %lf ms!\n", (double)(end-start));
     printf("Running time consumes %lf s!\n", (double)(end-start)/CLOCKS_PER_SEC);
@@ -85,6 +92,63 @@ void btSimple() {
         if (ansSet.find(currentStr) != ansSet.end()) {
             hitNumber++;
             hitsMap[guessedNumber] = currentStr;
+        }
+    }
+}
+void btNumber(int numLimit) {
+    char frontStr[20], backStr[20];
+    string currentStr, fStr, bStr;
+    uint8_t result[16];
+    set<string>::iterator iter;
+    for (int front = 0; front < numLimit; front++) {
+        for (int back = 0; back < numLimit; back++) {
+            if (totalNumber <= 0) {
+                return ;
+            }
+            sprintf(frontStr, "%d", front);
+            sprintf(backStr, "%d", back);
+            fStr = frontStr;
+            bStr = backStr;
+
+            iter = dicSetSimple.begin();
+            for (;iter != dicSetSimple.end(); iter++) {
+                guessedNumber++;
+                md5((uint8_t *)((fStr + *iter).c_str()), (fStr + *iter).length(), result);
+                for (int i = 0; i < 16; i++) {
+                    char ss[10];
+                    sprintf(ss, "%2.2x", result[i]);
+                    currentStr += ss;
+                }
+                if (ansSet.find(currentStr) != ansSet.end()) {
+                    totalNumber--;
+                    hitNumber++;
+                    hitsMap[guessedNumber] = currentStr;
+                }
+                guessedNumber++;
+                md5((uint8_t *)((*iter + bStr).c_str()), (*iter + bStr).length(), result);
+                for (int i = 0; i < 16; i++) {
+                    char ss[10];
+                    sprintf(ss, "%2.2x", result[i]);
+                    currentStr += ss;
+                }
+                if (ansSet.find(currentStr) != ansSet.end()) {
+                    totalNumber--;
+                    hitNumber++;
+                    hitsMap[guessedNumber] = currentStr;
+                }
+                guessedNumber++;
+                md5((uint8_t *)((fStr + *iter + bStr).c_str()), (fStr + *iter + bStr).length(), result);
+                for (int i = 0; i < 16; i++) {
+                    char ss[10];
+                    sprintf(ss, "%2.2x", result[i]);
+                    currentStr += ss;
+                }
+                if (ansSet.find(currentStr) != ansSet.end()) {
+                    totalNumber--;
+                    hitNumber++;
+                    hitsMap[guessedNumber] = currentStr;
+                }
+            }
         }
     }
 }
@@ -171,12 +235,14 @@ void loadDic() {
     while(~fscanf(dic, "%s", tmpstr)) {
         int len = strlen(tmpstr);
         for (int i = 0; i < len; i++) tmpstr[i] = toupper(tmpstr[i]);
+        dicSetSimple.insert(tmpstr);
+        /*
         dicdfs(tmpstr, 0, len);
         for (int i = 0; i < tmpDicV.size(); i++) {
             dicSet.insert(tmpDicV[i]);
         }
+        */
     }
-    totalNumber = dicSet.size();
     fclose(dic);
 }
 // make upper and lower choice
