@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <cstdint>
 #include <string>
 #include <cctype>
@@ -10,18 +11,16 @@
 //#define DUMPINFO
 using namespace std;
 extern void md5(const uint8_t *, size_t, uint8_t *);
-void init();
+void init(char *);
 void loadDic();
 void dicdfs(char *, int, int);
 void dump();    //dump infomation to output file
-void loadAnsHash();
+void loadAnsHash(char *);
 void btSimple(); // only test dictionary string
-void btExtend(); // test with numbers
-void btFront(int);
-void btBack(int);
-void btFAB(int);
+void btExtend(int); // test with numbers
 long long int guessedNumber = 0;
 long long int hitNumber = 0;
+long long int totalNumber = 0;
 set<string> dicSet;
 set<string> ansSet;
 map<long long int, string> hitsMap;
@@ -46,14 +45,27 @@ void dumpAnsHash() {
 #endif
 int main(int argc, char *argv[])
 {
-    init();
+    clock_t start, end;
+    printf("Start loading\n");
+    start = clock();
+    if (argc < 2)
+        init(NULL);
+    else
+        init(argv[1]);
 #ifdef DUMPINFO
     dumpDicSet();
     dumpAnsHash();
 #endif
-    printf("Load done\n");
-    btSimple();
-    btExtend();
+    printf("Loading done\n");
+    end = clock();
+    printf("Load dictionary consumes %lf ms!\n", (double)(end-start));
+    printf("Load dictionary consumes %lf s!\n", (double)(end-start)/CLOCKS_PER_SEC);
+    start = clock();
+    //btSimple();
+    btExtend(3);
+    end = clock();
+    printf("Running time consumes %lf ms!\n", (double)(end-start));
+    printf("Running time consumes %lf s!\n", (double)(end-start)/CLOCKS_PER_SEC);
     dump();
     return 0;
 }
@@ -76,56 +88,76 @@ void btSimple() {
         }
     }
 }
-void btFront(int lv) {
-    string currentStr;
-    set<string>::iterator iter = dicSet.begin();
+void btExtend(int numLimit) {
+    char frontStr[20], backStr[20];
+    string currentStr, fStr, bStr;
     uint8_t result[16];
-    for (;iter != dicSet.end(); iter++) {
-        string tmps = *iter;
-        char OAO[4] = {0};
-        for (int i = '0'; i <= '9'; i++)
-            for (int j = '0'; j <= '9'; j++)
-                for (int k = '0'; k <= '9'; k++) {
-                    OAO[0] = i; OAO[1] = j; OAO[2] = k;
-                    string QAQ = OAO;
+    set<string>::iterator iter;
+    for (int front = 0; front < numLimit; front++) {
+        for (int back = 0; back < numLimit; back++) {
+            if (totalNumber <= 0) {
+                return ;
+            }
+            sprintf(frontStr, "%d", front);
+            sprintf(backStr, "%d", back);
+            fStr = frontStr;
+            bStr = backStr;
 
-                    guessedNumber++;
-                    md5((uint8_t *)((QAQ+tmps).c_str()), (iter->length())+(size_t)3, result);
-                    for (int i = 0; i < 16; i++) {
-                        char ss[10];
-                        sprintf(ss, "%2.2x", result[i]);
-                        currentStr += ss;
-                    }
-                    if (ansSet.find(currentStr) != ansSet.end()) {
-                        hitNumber++;
-                        hitsMap[guessedNumber] = currentStr;
-                    }
+            iter = dicSet.begin();
+            for (;iter != dicSet.end(); iter++) {
+                guessedNumber++;
+                md5((uint8_t *)((fStr + *iter).c_str()), (fStr + *iter).length(), result);
+                for (int i = 0; i < 16; i++) {
+                    char ss[10];
+                    sprintf(ss, "%2.2x", result[i]);
+                    currentStr += ss;
                 }
+                if (ansSet.find(currentStr) != ansSet.end()) {
+                    totalNumber--;
+                    hitNumber++;
+                    hitsMap[guessedNumber] = currentStr;
+                }
+                guessedNumber++;
+                md5((uint8_t *)((*iter + bStr).c_str()), (*iter + bStr).length(), result);
+                for (int i = 0; i < 16; i++) {
+                    char ss[10];
+                    sprintf(ss, "%2.2x", result[i]);
+                    currentStr += ss;
+                }
+                if (ansSet.find(currentStr) != ansSet.end()) {
+                    totalNumber--;
+                    hitNumber++;
+                    hitsMap[guessedNumber] = currentStr;
+                }
+                guessedNumber++;
+                md5((uint8_t *)((fStr + *iter + bStr).c_str()), (fStr + *iter + bStr).length(), result);
+                for (int i = 0; i < 16; i++) {
+                    char ss[10];
+                    sprintf(ss, "%2.2x", result[i]);
+                    currentStr += ss;
+                }
+                if (ansSet.find(currentStr) != ansSet.end()) {
+                    totalNumber--;
+                    hitNumber++;
+                    hitsMap[guessedNumber] = currentStr;
+                }
+            }
+        }
     }
 }
-void btBack(int lv) {
-
-}
-void btFAB(int lv) {
-
-}
-void btExtend() {
-    //for (int i = 1; i < 3; i++)
-        btFront(3);
-    for (int i = 1; i < 3; i++)
-        btBack(i);
-    for (int i = 1; i < 3; i++)
-        for (int j = 1; j < 3; j++)
-            btFAB(i);
-}
 // initialize
-void init() {
+void init(char *hashPath) {
     loadDic();
-    loadAnsHash();
+    loadAnsHash(hashPath);
 }
 // loading hashed password
-void loadAnsHash() {
-    FILE *ans = fopen("HashedPassword.txt", "r");
+void loadAnsHash(char *path) {
+    FILE *ans;
+    if (path == NULL)
+        ans = fopen("HashedPassword.txt", "r");
+    else
+        ans = fopen(path, "r");
+
     char tmpstr[1000];
     while(~fscanf(ans, "%s", tmpstr)) {
         ansSet.insert((string)tmpstr);
@@ -144,6 +176,7 @@ void loadDic() {
             dicSet.insert(tmpDicV[i]);
         }
     }
+    totalNumber = dicSet.size();
     fclose(dic);
 }
 // make upper and lower choice
