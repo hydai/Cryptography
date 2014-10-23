@@ -33,24 +33,6 @@ set<string> dicSetSimple;
 set<string> ansSet;
 map<long long int, string> hitsMap;
 vector<string> tmpDicV;
-#ifdef DUMPINFO
-void dumpDicSet() {
-    set<string>::iterator iter = dicSet.begin();
-    FILE *dS = fopen("dicSet.txt", "w");
-    for (; iter != dicSet.end(); iter++) {
-        fprintf(dS, "%s\n", iter->c_str());
-    }
-    fclose(dS);
-}
-void dumpAnsHash() {
-    set<string>::iterator iter = ansSet.begin();
-    FILE *dS = fopen("ansSet.txt", "w");
-    for (; iter != ansSet.end(); iter++) {
-        fprintf(dS, "%s\n", iter->c_str());
-    }
-    fclose(dS);
-}
-#endif
 int main(int argc, char *argv[])
 {
     clock_t start, end;
@@ -60,16 +42,11 @@ int main(int argc, char *argv[])
         init(NULL);
     else
         init(argv[1]);
-#ifdef DUMPINFO
-    dumpDicSet();
-    dumpAnsHash();
-#endif
     printf("Loading done\n");
     end = clock();
     printf("Load dictionary consumes %lf ms!\n", (double)(end-start));
     printf("Load dictionary consumes %lf s!\n", (double)(end-start)/CLOCKS_PER_SEC);
     start = clock();
-    //btSimple();
 #ifdef StrFirst
     btExtend(3);
 #else
@@ -82,24 +59,6 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void btSimple() {
-    string currentStr;
-    set<string>::iterator iter = dicSet.begin();
-    uint8_t result[16];
-    for (;iter != dicSet.end(); iter++) {
-        guessedNumber++;
-        md5((uint8_t *)(iter->c_str()), iter->length(), result);
-        for (int i = 0; i < 16; i++) {
-            char ss[10];
-            sprintf(ss, "%2.2x", result[i]);
-            currentStr += ss;
-        }
-        if (ansSet.find(currentStr) != ansSet.end()) {
-            hitNumber++;
-            hitsMap[guessedNumber] = currentStr;
-        }
-    }
-}
 void md5Test(const char *input, int length, uint8_t result[16]) {
     string retString = "";
     md5((uint8_t *)input, length, result);
@@ -142,7 +101,7 @@ void btNumber(int numLimit, STTYPE type) {
             }
         }
     } else if (type == FRONT) {
-        for (int front = 0; front < numLimit*numLimit; front++) {
+        for (int front = 0; front <= numLimit; front++) {
             if (totalNumber <= 0) {
                 return ;
             }
@@ -156,7 +115,7 @@ void btNumber(int numLimit, STTYPE type) {
             }
         }
     } else {
-        for (int back = 0; back < numLimit*numLimit; back++) {
+        for (int back = 0; back <= numLimit; back++) {
             if (totalNumber <= 0) {
                 return ;
             }
@@ -289,6 +248,6 @@ void dump() {
     fprintf(outputFile, "------------------------------------------\n");
     fprintf(outputFile, "猜了 %lld 個 sequence\n", guessedNumber);
     fprintf(outputFile, "猜中了 %lld 個 password\n", hitNumber);
-    fprintf(outputFile, "breaking rate : %lf %%\n", (double)guessedNumber/(double)hitNumber);
+    fprintf(outputFile, "breaking rate : %lf %%\n", (double)hitNumber/(double)guessedNumber);
     fclose(outputFile);
 }
