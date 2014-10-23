@@ -7,24 +7,18 @@
 #include <set>
 #include <map>
 #include <vector>
-//#define DUMPINFO
-//#define StrFirst
 using namespace std;
 #define uint8_t unsigned char
-enum STTYPE {
-    FRONT           = 1,
-    BACK            = 2,
-    FRONTANDBACK    = 3
-};
 extern void md5(const uint8_t *, size_t, uint8_t *);
-void init(char *);
-void loadDic();
+void md5Test(const char *input, int length);
+void init(char *, char *);
+void loadDic(char *);
 void dicdfs(char *, int, int);
 void dump();    //dump infomation to output file
 void loadAnsHash(char *);
-void btSimple(); // only test dictionary string
-void btExtend(int); // test with numbers but string first
-void btNumber(int, STTYPE); // test with numbers first
+long long int stPT[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+long long int edPT[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, 9999999999, 99999999999, 999999999999};
+void testString(string str);
 long long int guessedNumber = 0;
 long long int hitNumber = 0;
 long long int totalNumber = 100;
@@ -32,36 +26,28 @@ set<string> dicSet;
 set<string> dicSetSimple;
 set<string> ansSet;
 map<long long int, string> hitsMap;
-vector<string> tmpDicV;
 int main(int argc, char *argv[])
 {
     clock_t start, end;
     printf("Start loading\n");
     start = clock();
     if (argc < 2)
-        init(NULL);
+        init(NULL, NULL);
     else
-        init(argv[1]);
+        init(argv[1], argv[2]);
     printf("Loading done\n");
     end = clock();
     printf("Load dictionary consumes %lf ms!\n", (double)(end-start));
     printf("Load dictionary consumes %lf s!\n", (double)(end-start)/CLOCKS_PER_SEC);
-    start = clock();
-#ifdef StrFirst
-    btExtend(3);
-#else
-    btNumber(100, FRONT);
-#endif
-    end = clock();
-    printf("Running time consumes %lf ms!\n", (double)(end-start));
-    printf("Running time consumes %lf s!\n", (double)(end-start)/CLOCKS_PER_SEC);
     dump();
     return 0;
 }
 
-void md5Test(const char *input, int length, uint8_t result[16]) {
+void md5Test(const char *input, int length) {
     string retString = "";
+    uint8_t result[16];
     md5((uint8_t *)input, length, result);
+    guessedNumber++;
     for (int i = 0; i < 16; i++) {
         char ss[10];
         sprintf(ss, "%2.2x", result[i]);
@@ -73,124 +59,13 @@ void md5Test(const char *input, int length, uint8_t result[16]) {
         hitsMap[guessedNumber] = retString;
     }
 }
-void btNumber(int numLimit, STTYPE type) {
-    char frontStr[20], backStr[20];
-    string currentStr, fStr, bStr;
-    uint8_t result[16];
-    set<string>::iterator iter;
-    if (type == FRONTANDBACK) {
-        for (int front = 0; front < numLimit; front++) {
-            for (int back = 0; back < numLimit; back++) {
-                if (totalNumber <= 0) {
-                    return ;
-                }
-                sprintf(frontStr, "%d", front);
-                sprintf(backStr, "%d", back);
-                fStr = frontStr;
-                bStr = backStr;
 
-                iter = dicSetSimple.begin();
-                for (;iter != dicSetSimple.end(); iter++) {
-                    guessedNumber++;
-                    md5Test((fStr + *iter).c_str(), (fStr + *iter).length(), result);
-                    guessedNumber++;
-                    md5Test((*iter + bStr).c_str(), (*iter + bStr).length(), result);
-                    guessedNumber++;
-                    md5Test((fStr + *iter + bStr).c_str(), (fStr + *iter + bStr).length(), result);
-                }
-            }
-        }
-    } else if (type == FRONT) {
-        for (int front = 0; front <= numLimit; front++) {
-            if (totalNumber <= 0) {
-                return ;
-            }
-            sprintf(frontStr, "%d", front);
-            fStr = frontStr;
-
-            iter = dicSetSimple.begin();
-            for (;iter != dicSetSimple.end(); iter++) {
-                guessedNumber++;
-                md5Test((fStr + *iter).c_str(), (fStr + *iter).length(), result);
-            }
-        }
-    } else {
-        for (int back = 0; back <= numLimit; back++) {
-            if (totalNumber <= 0) {
-                return ;
-            }
-            sprintf(backStr, "%d", back);
-            bStr = backStr;
-
-            iter = dicSetSimple.begin();
-            for (;iter != dicSetSimple.end(); iter++) {
-                md5Test((*iter + bStr).c_str(), (*iter + bStr).length(), result);
-            }
-        }
-    }
-}
-void btExtend(int numLimit) {
-    char frontStr[20], backStr[20];
-    string currentStr, fStr, bStr;
-    uint8_t result[16];
-    set<string>::iterator iter;
-    for (int front = 0; front < numLimit; front++) {
-        for (int back = 0; back < numLimit; back++) {
-            if (totalNumber <= 0) {
-                return ;
-            }
-            sprintf(frontStr, "%d", front);
-            sprintf(backStr, "%d", back);
-            fStr = frontStr;
-            bStr = backStr;
-
-            iter = dicSet.begin();
-            for (;iter != dicSet.end(); iter++) {
-                guessedNumber++;
-                md5((uint8_t *)((fStr + *iter).c_str()), (fStr + *iter).length(), result);
-                for (int i = 0; i < 16; i++) {
-                    char ss[10];
-                    sprintf(ss, "%2.2x", result[i]);
-                    currentStr += ss;
-                }
-                if (ansSet.find(currentStr) != ansSet.end()) {
-                    totalNumber--;
-                    hitNumber++;
-                    hitsMap[guessedNumber] = currentStr;
-                }
-                guessedNumber++;
-                md5((uint8_t *)((*iter + bStr).c_str()), (*iter + bStr).length(), result);
-                for (int i = 0; i < 16; i++) {
-                    char ss[10];
-                    sprintf(ss, "%2.2x", result[i]);
-                    currentStr += ss;
-                }
-                if (ansSet.find(currentStr) != ansSet.end()) {
-                    totalNumber--;
-                    hitNumber++;
-                    hitsMap[guessedNumber] = currentStr;
-                }
-                guessedNumber++;
-                md5((uint8_t *)((fStr + *iter + bStr).c_str()), (fStr + *iter + bStr).length(), result);
-                for (int i = 0; i < 16; i++) {
-                    char ss[10];
-                    sprintf(ss, "%2.2x", result[i]);
-                    currentStr += ss;
-                }
-                if (ansSet.find(currentStr) != ansSet.end()) {
-                    totalNumber--;
-                    hitNumber++;
-                    hitsMap[guessedNumber] = currentStr;
-                }
-            }
-        }
-    }
-}
 // initialize
-void init(char *hashPath) {
-    loadDic();
+void init(char *hashPath, char *dicPath) {
     loadAnsHash(hashPath);
+    loadDic(dicPath);
 }
+
 // loading hashed password
 void loadAnsHash(char *path) {
     FILE *ans;
@@ -203,30 +78,53 @@ void loadAnsHash(char *path) {
     while(~fscanf(ans, "%s", tmpstr)) {
         ansSet.insert((string)tmpstr);
     }
+    totalNumber = ansSet.size();
     fclose(ans);
 }
+
 // loading dictionary files
-void loadDic() {
-    FILE *dic = fopen("dictionary.txt", "r");
+void loadDic(char *path) {
+    FILE *dic;
+    if (path == NULL)
+        dic = fopen("dictionary.txt", "r");
+    else
+        dic = fopen(path, "r");
+
     char tmpstr[1000];
     while(~fscanf(dic, "%s", tmpstr)) {
         int len = strlen(tmpstr);
+        if (len > 12) continue;
         for (int i = 0; i < len; i++) tmpstr[i] = toupper(tmpstr[i]);
-        dicSetSimple.insert(tmpstr);
-        /*
         dicdfs(tmpstr, 0, len);
-        for (int i = 0; i < tmpDicV.size(); i++) {
-            dicSet.insert(tmpDicV[i]);
-        }
-        */
     }
     fclose(dic);
 }
+
+void testString(string str) {
+    char rangeStr[20];
+    string currentStr, appendStr;
+    int len = str.length();
+    if (len == 12) {
+        md5Test(str.c_str(), len);
+        return;
+    }
+    int ind = 12 - len - 1;
+    for (long long int range = stPT[ind]; range <= edPT[ind]; range++) {
+        sprintf(rangeStr, "%lld", range);
+        appendStr = rangeStr;
+        currentStr = appendStr + str;
+        md5Test(currentStr.c_str(), currentStr.length());
+        currentStr = str + appendStr;
+        md5Test(currentStr.c_str(), currentStr.length());
+    }
+}
 // make upper and lower choice
 void dicdfs(char *str, int lv, int len) {
-    if (lv == 0) while(!tmpDicV.empty()) tmpDicV.pop_back();
+    if (totalNumber <= 0) {
+        return ;
+    }
     if (lv == len) {
-        tmpDicV.push_back((string)str);
+        testString((string)str);
         return;
     } else {
         char tmpc = str[lv];
