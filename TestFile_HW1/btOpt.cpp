@@ -95,7 +95,7 @@ void loadDic(char *path) {
     char tmpstr[1000];
     while(~fscanf(dic, "%s", tmpstr)) {
         int len = strlen(tmpstr);
-        if (len > 12) continue;
+        if (len >= 12 || len < 3) continue;
         for (int i = 0; i < len; i++) tmpstr[i] = toupper(tmpstr[i]);
         dicdfs(tmpstr, 0, len);
     }
@@ -106,12 +106,8 @@ void testString(string str) {
     char rangeStr[20];
     string currentStr, appendStr;
     int len = str.length();
-    if (len == 12) {
-        md5Test(str.c_str(), len);
-        return;
-    }
     int ind = 12 - len - 1;
-    for (long long int range = 501; range <= 999; range++) {
+    for (long long int range = 0; range <= 999; range++) {
         sprintf(rangeStr, "%lld", range);
         appendStr = rangeStr;
         currentStr = appendStr + str;
@@ -151,3 +147,4 @@ void dump() {
     fprintf(outputFile, "breaking rate : %lf %%\n", (double)hitNumber/(double)guessedNumber);
     fclose(outputFile);
 }
+/* test 3->8 */

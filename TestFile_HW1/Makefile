@@ -1,4 +1,5 @@
 SOURCE=bt.cpp md5.c
+OPTFILE=btOpt.cpp md5.c
 TARGET=bt
 CC=g++
 CFLAG=-O2
@@ -9,6 +10,9 @@ all:
 
 debug:
 	$(CC) $(DFLAG) -o $(TARGET) $(SOURCE)
+
+opt:
+	$(CC) $(CFLAG) -o $(TARGET) $(OPTFILE)
 
 clean:
 	-rm $(TARGET)
