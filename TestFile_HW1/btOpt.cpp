@@ -11,7 +11,7 @@
 using namespace std;
 #define uint8_t unsigned char
 extern void md5(const uint8_t *, size_t, uint8_t *);
-void md5Test(const char *input, int length);
+bool md5Test(const char *input, int length);
 void init(char *, char *);
 void loadDic(char *);
 void dicdfs(char *, int, int);
@@ -19,10 +19,15 @@ void dump();    //dump infomation to output file
 void loadAnsHash(char *);
 long long int stPT[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 long long int edPT[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, 9999999999, 99999999999, 999999999999};
-void testString(string str);
+#ifdef USE_STRING
+bool testString(string str);
+#else
+bool testString(char str[], int len);
+#endif
 long long int guessedNumber = 0;
 long long int hitNumber = 0;
 long long int totalNumber = 100;
+bool optFlag;
 set<string> dicSet;
 set<string> dicSetSimple;
 set<string> ansSet;
@@ -44,7 +49,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-void md5Test(const char *input, int length) {
+bool md5Test(const char *input, int length) {
     string retString = "";
     uint8_t result[16];
     md5((uint8_t *)input, length, result);
@@ -59,7 +64,9 @@ void md5Test(const char *input, int length) {
         totalNumber--;
         hitNumber++;
         hitsMap[guessedNumber] = input;
+        return true;
     }
+    return false;
 }
 
 // initialize
@@ -97,32 +104,53 @@ void loadDic(char *path) {
         int len = strlen(tmpstr);
         if (len >= 12 || len < 3) continue;
         for (int i = 0; i < len; i++) tmpstr[i] = toupper(tmpstr[i]);
+        optFlag = false;
         dicdfs(tmpstr, 0, len);
     }
     fclose(dic);
 }
 
-void testString(string str) {
+#ifdef USE_STRING
+bool testString(string str) {
     char rangeStr[20];
     string currentStr, appendStr;
     int len = str.length();
     int ind = 12 - len - 1;
+    bool ishit = false;
     for (long long int range = 0; range <= 999; range++) {
         sprintf(rangeStr, "%lld", range);
         appendStr = rangeStr;
         currentStr = appendStr + str;
-        md5Test(currentStr.c_str(), currentStr.length());
+        ishit |= md5Test(currentStr.c_str(), currentStr.length());
         currentStr = str + appendStr;
-        md5Test(currentStr.c_str(), currentStr.length());
+        ishit |= md5Test(currentStr.c_str(), currentStr.length());
     }
+    return ishit;
 }
+#else
+bool testString(char str[], int len) {
+    char rangeStr[20];
+    bool ishit = false;
+    for (int range = 0; range <= 999; range++) {
+        sprintf(rangeStr, "%s%d", str, range);
+        ishit |= md5Test(rangeStr, strlen(rangeStr));
+        sprintf(rangeStr, "%d%s", range, str);
+        ishit |= md5Test(rangeStr, strlen(rangeStr));
+    }
+    return ishit;
+}
+#endif
 // make upper and lower choice
 void dicdfs(char *str, int lv, int len) {
-    if (totalNumber <= 0) {
+    if (totalNumber <= 0 || optFlag) {
         return ;
     }
     if (lv == len) {
-        testString((string)str);
+#ifdef USE_STRING
+        optFlag = testString((string)str);
+#else
+        optFlag = testString(str, len);
+#endif
         return;
     } else {
         char tmpc = str[lv];

@@ -2,7 +2,7 @@ SOURCE=bt.cpp md5.c
 OPTFILE=btOpt.cpp md5.c
 TARGET=bt
 CC=g++
-CFLAG=-O2
+CFLAG=-O3
 DFLAG=-O2 -g
 
 all:
