@@ -14,20 +14,15 @@ extern void md5(const uint8_t *, size_t, uint8_t *);
 bool md5Test(const char *input, int length);
 void init(char *, char *);
 void loadDic(char *);
-void dicdfs(char *, int, int);
+void dicdfs(char *, int);
 void dump();    //dump infomation to output file
 void loadAnsHash(char *);
-#ifdef USE_STRING
-bool testString(string str);
-#else
 bool testString(char str[], int len);
-#endif
 long long int guessedNumber = 0;
 long long int hitNumber = 0;
 long long int totalNumber = 100;
+int *dfsMapping[11];
 bool optFlag;
-set<string> dicSet;
-set<string> dicSetSimple;
 set<string> ansSet;
 map<long long int, string> hitsMap;
 int main(int argc, char *argv[])
@@ -97,44 +92,36 @@ void loadDic(char *path) {
     else
         dic = fopen(path, "r");
 
+    for (int i = 0; i < 11; i++) {
+        int size = 2 << i;
+        dfsMapping[i] = (int *) malloc ((size)*sizeof(int));
+    }
+    for (int i = 0; i < 11; i++) {
+        for (int j = 0; j < (2<<i); j++) {
+            dfsMapping[i][j] = j;
+        }
+    }
     char tmpstr[1000];
     while(~fscanf(dic, "%s", tmpstr)) {
         int len = strlen(tmpstr);
         if (len >= 12 || len < 3) continue;
         bool isContainNotAlpha = false;
         for (int i = 0; i < len; i++) {
-            if (isalpha(str[i]) == 0) {isContainNotAlpha = true; break;}
+            if (isalpha(tmpstr[i]) == 0) {isContainNotAlpha = true; break;}
         }
         if (isContainNotAlpha) {continue;}
         for (int i = 0; i < len; i++) tmpstr[i] = toupper(tmpstr[i]);
         optFlag = false;
-        dicdfs(tmpstr, 0, len);
+        dicdfs(tmpstr, len);
     }
     fclose(dic);
 }
 
 int stPT[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 int edPT[] = {9, 99, 999, 999, 999, 999, 999, 999, 999, 999, 999, 999};
-#ifdef USE_STRING
-bool testString(string str) {
-    char rangeStr[20];
-    string currentStr, appendStr;
-    int len = str.length();
-    int ind = 12 - len - 1;
-    bool ishit = false;
-    for (int range = stPT[ind]; range <= edPT[ind]; range++) {
-        sprintf(rangeStr, "%lld", range);
-        appendStr = rangeStr;
-        currentStr = appendStr + str;
-        ishit |= md5Test(currentStr.c_str(), currentStr.length());
-        currentStr = str + appendStr;
-        ishit |= md5Test(currentStr.c_str(), currentStr.length());
-    }
-    return ishit;
-}
-#else
 bool testString(char str[], int len) {
     char rangeStr[20];
+    int ind = 12 - len - 1;
     bool ishit = false;
     for (int range = stPT[ind]; range <= edPT[ind]; range++) {
         sprintf(rangeStr, "%s%d", str, range);
@@ -144,28 +131,25 @@ bool testString(char str[], int len) {
     }
     return ishit;
 }
-#endif
 // make upper and lower choice
-void dicdfs(char *str, int lv, int len) {
+void dicdfs(char *str, int len) {
     if (totalNumber <= 0 || optFlag) {
         return ;
     }
-    if (lv == len) {
-        printf("%s\t\t\t%lld\n", str, guessedNumber);
-#ifdef USE_STRING
-        optFlag = testString((string)str);
-#else
-        optFlag = testString(str, len);
-#endif
-        return;
-    } else {
-        char tmpc = str[lv];
-        str[lv] = toupper(str[lv]);
-        dicdfs(str, lv+1, len);
-        str[lv] = tolower(str[lv]);
-        dicdfs(str, lv+1, len);
-        str[lv] = tmpc;
+    char ttstr[100];
+    for (int i = 0; i < (2 << (len-1)); i++) {
+        int tmpt = dfsMapping[len-1][i];
+        for (int j = len-1; j >= 0; j--) {
+            if (tmpt & 1) {
+                ttstr[j] = toupper(str[j]);
+            } else {
+                ttstr[j] = tolower(str[j]);
+            }
+            tmpt = tmpt >> 1;
+        }
+        optFlag = testString(ttstr, len);
     }
+    return;
 }
 // dump to output file
 void dump() {
