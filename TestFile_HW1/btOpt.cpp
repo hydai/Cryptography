@@ -115,6 +115,9 @@ void loadDic(char *path) {
         dicdfs(tmpstr, len);
     }
     fclose(dic);
+    for (int i = 0; i < 11; i++) {
+        free(dfsMapping[i]);
+    }
 }
 
 int stPT[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -133,10 +136,10 @@ bool testString(char str[], int len) {
 }
 // make upper and lower choice
 void dicdfs(char *str, int len) {
-    if (totalNumber <= 0 || optFlag) {
+    if (totalNumber <= 0) {
         return ;
     }
-    char ttstr[100];
+    char ttstr[20] = {0};
     for (int i = 0; i < (2 << (len-1)); i++) {
         int tmpt = dfsMapping[len-1][i];
         for (int j = len-1; j >= 0; j--) {
@@ -148,6 +151,8 @@ void dicdfs(char *str, int len) {
             tmpt = tmpt >> 1;
         }
         optFlag = testString(ttstr, len);
+        if (optFlag)
+            break;
     }
     return;
 }

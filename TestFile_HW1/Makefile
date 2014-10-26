@@ -14,5 +14,8 @@ debug:
 opt:
 	$(CC) $(CFLAG) -o $(TARGET) $(OPTFILE)
 
+optdebug:
+	$(CC) $(DFLAG) -o $(TARGET) $(OPTFILE)
+
 clean:
 	-rm $(TARGET)
