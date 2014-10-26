@@ -17,8 +17,6 @@ void loadDic(char *);
 void dicdfs(char *, int, int);
 void dump();    //dump infomation to output file
 void loadAnsHash(char *);
-long long int stPT[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-long long int edPT[] = {9, 99, 999, 9999, 99999, 999999, 9999999, 99999999, 999999999, 9999999999, 99999999999, 999999999999};
 #ifdef USE_STRING
 bool testString(string str);
 #else
@@ -60,7 +58,7 @@ bool md5Test(const char *input, int length) {
         retString += ss;
     }
     if (ansSet.find(retString) != ansSet.end()) {
-        cout << input << endl;
+        printf("%s\n", input);
         totalNumber--;
         hitNumber++;
         hitsMap[guessedNumber] = input;
@@ -103,6 +101,11 @@ void loadDic(char *path) {
     while(~fscanf(dic, "%s", tmpstr)) {
         int len = strlen(tmpstr);
         if (len >= 12 || len < 3) continue;
+        bool isContainNotAlpha = false;
+        for (int i = 0; i < len; i++) {
+            if (isalpha(str[i]) == 0) {isContainNotAlpha = true; break;}
+        }
+        if (isContainNotAlpha) {continue;}
         for (int i = 0; i < len; i++) tmpstr[i] = toupper(tmpstr[i]);
         optFlag = false;
         dicdfs(tmpstr, 0, len);
@@ -110,6 +113,8 @@ void loadDic(char *path) {
     fclose(dic);
 }
 
+int stPT[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+int edPT[] = {9, 99, 999, 999, 999, 999, 999, 999, 999, 999, 999, 999};
 #ifdef USE_STRING
 bool testString(string str) {
     char rangeStr[20];
@@ -117,7 +122,7 @@ bool testString(string str) {
     int len = str.length();
     int ind = 12 - len - 1;
     bool ishit = false;
-    for (long long int range = 0; range <= 999; range++) {
+    for (int range = stPT[ind]; range <= edPT[ind]; range++) {
         sprintf(rangeStr, "%lld", range);
         appendStr = rangeStr;
         currentStr = appendStr + str;
@@ -131,7 +136,7 @@ bool testString(string str) {
 bool testString(char str[], int len) {
     char rangeStr[20];
     bool ishit = false;
-    for (int range = 0; range <= 999; range++) {
+    for (int range = stPT[ind]; range <= edPT[ind]; range++) {
         sprintf(rangeStr, "%s%d", str, range);
         ishit |= md5Test(rangeStr, strlen(rangeStr));
         sprintf(rangeStr, "%d%s", range, str);
@@ -146,6 +151,7 @@ void dicdfs(char *str, int lv, int len) {
         return ;
     }
     if (lv == len) {
+        printf("%s\t\t\t%lld\n", str, guessedNumber);
 #ifdef USE_STRING
         optFlag = testString((string)str);
 #else
