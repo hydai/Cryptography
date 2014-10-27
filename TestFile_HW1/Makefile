@@ -1,9 +1,11 @@
 SOURCE=bt.cpp md5.c
 OPTFILE=btOpt.cpp md5.c
+PRFILE=btPr.cpp md5.c
 TARGET=bt
 CC=g++
-CFLAG=-O3
+CFLAG=-O2
 DFLAG=-O2 -g
+PRFLAG=-O2 -lpthread
 
 all:
 	$(CC) $(CFLAG) -o $(TARGET) $(SOURCE)
@@ -16,6 +18,9 @@ opt:
 
 optdebug:
 	$(CC) $(DFLAG) -o $(TARGET) $(OPTFILE)
+
+pr:
+	$(CC) $(PRFLAG) -o $(TARGET) $(PRFILE)
 
 clean:
 	-rm $(TARGET)
