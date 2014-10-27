@@ -10,6 +10,7 @@
 #include <iostream>
 #include <pthread.h>
 using namespace std;
+#define THREAD_NUM 8
 #define uint8_t unsigned char
 /* ========== Function declaration ========== */
 extern void md5(const uint8_t *, size_t, uint8_t *);
@@ -109,20 +110,20 @@ void loadDic(char *path) {
             dfsMapping[i][j] = j;
         }
     }
-    pthread_t pthreads[4];
+    pthread_t pthreads[THREAD_NUM];
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_mutex_init(&mutexInputString, NULL);
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < THREAD_NUM; i++) {
         int ret = pthread_create(&pthreads[i], &attr, pthreadTest, (void *)dic);
         if (ret) {
             fprintf(stderr, "ERROR! pthread_create FAILED!\n");
             exit(-1);
         }
     }
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < THREAD_NUM; i++) {
         int status;
         pthread_join(pthreads[i], (void **)&status);
     }
