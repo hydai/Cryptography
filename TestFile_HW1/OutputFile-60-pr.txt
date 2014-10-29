@@ -1,0 +1,66 @@
+------------------------------------------
+441FamilY	在第 16341087 個sequence 被猜中
+boRN22	在第 18044689 個sequence 被猜中
+0tRuCK	在第 18650892 個sequence 被猜中
+iCeCREAM241	在第 26827548 個sequence 被猜中
+7SWeATeR	在第 30549492 個sequence 被猜中
+92cHInA	在第 34581732 個sequence 被猜中
+DOG83	在第 37218811 個sequence 被猜中
+714exCUsE	在第 39270211 個sequence 被猜中
+1larGE	在第 54067867 個sequence 被猜中
+puSh1	在第 60047799 個sequence 被猜中
+1HonesT	在第 75900859 個sequence 被猜中
+PackaGE8	在第 94444070 個sequence 被猜中
+3RuN	在第 94974721 個sequence 被猜中
+2nEigHbOR	在第 114779291 個sequence 被猜中
+1BRUNcH	在第 139410493 個sequence 被猜中
+8cLiMBIng	在第 147283939 個sequence 被猜中
+25euRoPe	在第 157142137 個sequence 被猜中
+291eyebrow	在第 157328655 個sequence 被猜中
+guAva8	在第 162745864 個sequence 被猜中
+AcTRess0	在第 242075846 個sequence 被猜中
+649puRpOsE	在第 250500622 個sequence 被猜中
+wEDdiNG0	在第 259871378 個sequence 被猜中
+ALbEIt15	在第 265624746 個sequence 被猜中
+ANcHOR681	在第 265667108 個sequence 被猜中
+0blEed	在第 268586635 個sequence 被猜中
+DYINg1	在第 285805975 個sequence 被猜中
+spaRe86	在第 318943734 個sequence 被猜中
+Used3	在第 327429120 個sequence 被猜中
+brEaST1	在第 376419280 個sequence 被猜中
+92nOveLTy	在第 480538901 個sequence 被猜中
+0PROlONg	在第 498578021 個sequence 被猜中
+SCaNtY851	在第 508447115 個sequence 被猜中
+1ShepHerD	在第 511451933 個sequence 被猜中
+177CoNNeCT	在第 570777556 個sequence 被猜中
+DeSPIsE66	在第 577543964 個sequence 被猜中
+71ENDeaVOr	在第 585213924 個sequence 被猜中
+10HeroiNe	在第 590965448 個sequence 被猜中
+96insTaLL	在第 595775373 個sequence 被猜中
+SUE32	在第 632920398 個sequence 被猜中
+DIfFEr30	在第 686777770 個sequence 被猜中
+9DIsposE	在第 693345351 個sequence 被猜中
+doNor0	在第 695959938 個sequence 被猜中
+SaUsagE87	在第 831952667 個sequence 被猜中
+SPOT7	在第 841087412 個sequence 被猜中
+tRuAnt116	在第 859377027 個sequence 被猜中
+upPer645	在第 866137782 個sequence 被猜中
+377wHistle	在第 873824860 個sequence 被猜中
+mankIND1	在第 939497905 個sequence 被猜中
+aFFroNt147	在第 1028997758 個sequence 被猜中
+assEnt687	在第 1044916425 個sequence 被猜中
+BIPeD47	在第 1061435565 個sequence 被猜中
+bUtT43	在第 1070972220 個sequence 被猜中
+87cULCH	在第 1107816790 個sequence 被猜中
+1EXCAVAte	在第 1167648006 個sequence 被猜中
+aSThMa3	在第 1271880302 個sequence 被猜中
+30NAUtIcal	在第 1469722423 個sequence 被猜中
+salieNt4	在第 1608064610 個sequence 被猜中
+solstIcE4	在第 1644011109 個sequence 被猜中
+173SpeCtrE	在第 1647671261 個sequence 被猜中
+ViTRIoL0	在第 1735089443 個sequence 被猜中
+------------------------------------------
+猜了 1812937458 個 sequence
+猜中了 60 個 password
+breaking rate : 0.600000 %
+2537 s!
