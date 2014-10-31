@@ -17,21 +17,25 @@ extern void md5(const uint8_t *, size_t, uint8_t *);
 bool md5Test(const char *input, int length);
 void init(char *, char *);
 void loadDic(char *);
-void dicdfs(char *, int);
+void dicdfs(char *, int, bool);
 void dump();    //dump infomation to output file
 void loadAnsHash(char *);
 bool testString(char str[], int len);
+bool testStringV2(char str[], int len);
 /* ========== Variable declaration ========== */
+long long int chanceNumber = 4000000000;
 long long int guessedNumber = 0;
 long long int hitNumber = 0;
 long long int totalNumber = 100;
 int *dfsMapping[11];
 bool optFlag;
 set<string> ansSet;
+set<string> dicSet;
 map<long long int, string> hitsMap;
 /* ========== Pthread  declaration ========== */
 pthread_mutex_t mutexInputString;
-void *pthreadTest(void *dicPtr);
+pthread_mutex_t mutexNumberChange;
+void *pthreadTest(void *);
 int main(int argc, char *argv[])
 {
     clock_t start, end;
@@ -53,19 +57,20 @@ bool md5Test(const char *input, int length) {
     string retString = "";
     uint8_t result[16];
     md5((uint8_t *)input, length, result);
-    guessedNumber++;
     for (int i = 0; i < 16; i++) {
         char ss[10];
         sprintf(ss, "%2.2x", result[i]);
         retString += ss;
     }
+    chanceNumber--;
+    guessedNumber++;
     if (ansSet.find(retString) != ansSet.end()) {
         printf("%s\n", input);
-        pthread_mutex_lock(&mutexInputString);
+        pthread_mutex_lock(&mutexNumberChange);
         totalNumber--;
         hitNumber++;
         hitsMap[guessedNumber] = input;
-        pthread_mutex_unlock(&mutexInputString);
+        pthread_mutex_unlock(&mutexNumberChange);
         return true;
     }
     return false;
@@ -111,10 +116,12 @@ void loadDic(char *path) {
         }
     }
     pthread_t pthreads[THREAD_NUM];
+    pthread_t pthreadsRe[THREAD_NUM];
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
     pthread_mutex_init(&mutexInputString, NULL);
+    pthread_mutex_init(&mutexNumberChange, NULL);
 
     for (int i = 0; i < THREAD_NUM; i++) {
         int ret = pthread_create(&pthreads[i], &attr, pthreadTest, (void *)dic);
@@ -127,8 +134,16 @@ void loadDic(char *path) {
         int status;
         pthread_join(pthreads[i], (void **)&status);
     }
-
     fclose(dic);
+
+    // Remainer test
+    char tmpstr[20];
+    set<string>::iterator iter = dicSet.begin();
+    for (; iter != dicSet.end() && chanceNumber > 0; iter++) {
+        strcpy(tmpstr, iter->c_str());
+        dicdfs(tmpstr, iter->length(), true);
+    }
+
     for (int i = 0; i < 11; i++) {
         free(dfsMapping[i]);
     }
@@ -138,26 +153,39 @@ void loadDic(char *path) {
 void *pthreadTest(void *dicPtr) {
     char tmpstr[1000];
     FILE *dic = (FILE *)dicPtr;
+    bool isDone = false;
     while(1) {
+        pthread_mutex_lock(&mutexNumberChange);
+        if (chanceNumber <= 0) {
+            isDone = true;
+        }
+        pthread_mutex_unlock(&mutexNumberChange);
+        if (isDone) {
+            break;
+        }
+
         pthread_mutex_lock(&mutexInputString);
         int ret = fscanf(dic, "%s", tmpstr);
         pthread_mutex_unlock(&mutexInputString);
+
         if (ret != 1) break;
+        printf("PUSHEEN %s\n", tmpstr);
         int len = strlen(tmpstr);
-        if (len >= 12 || len < 3) continue;
+        if (len >= 12) continue;
         bool isContainNotAlpha = false;
         for (int i = 0; i < len; i++) {
             if (isalpha(tmpstr[i]) == 0) {isContainNotAlpha = true; break;}
         }
         if (isContainNotAlpha) {continue;}
         for (int i = 0; i < len; i++) tmpstr[i] = toupper(tmpstr[i]);
+        dicSet.insert((string)tmpstr);
         optFlag = false;
-        dicdfs(tmpstr, len);
+        dicdfs(tmpstr, len, false);
     }
     pthread_exit(NULL);
 }
 int stPT[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int edPT[] = {9, 99, 999, 999, 999, 999, 999, 999, 999, 999, 999, 999};
+int edPT[] = {9, 99, 999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999, 9999};
 bool testString(char str[], int len) {
     char rangeStr[20];
     int ind = 12 - len - 1;
@@ -170,9 +198,21 @@ bool testString(char str[], int len) {
     }
     return ishit;
 }
+bool testStringV2(char str[], int len) {
+    char rangeStr[20];
+    bool ishit = false;
+    for (int front = 0; front <= 99; front++) {
+        for (int back = 0; back <= 99; back++) {
+            sprintf(rangeStr, "%d%s%d", front, str, back);
+            if (strlen(rangeStr) > 12) break;
+            ishit |= md5Test(rangeStr, strlen(rangeStr));
+        }
+    }
+    return ishit;
+}
 // make upper and lower choice
-void dicdfs(char *str, int len) {
-    if (totalNumber <= 0) {
+void dicdfs(char *str, int len, bool isRemain) {
+    if (totalNumber <= 0 || chanceNumber <= 0) {
         return ;
     }
     char ttstr[20] = {0};
@@ -186,8 +226,12 @@ void dicdfs(char *str, int len) {
             }
             tmpt = tmpt >> 1;
         }
-        optFlag = testString(ttstr, len);
-        if (optFlag)
+        if (!isRemain) {
+            optFlag = testString(ttstr, len);
+        } else {
+            optFlag = testStringV2(ttstr, len);
+        }
+        if (optFlag || chanceNumber <= 0)
             break;
     }
     return;
@@ -203,7 +247,7 @@ void dump() {
     fprintf(outputFile, "------------------------------------------\n");
     fprintf(outputFile, "猜了 %lld 個 sequence\n", guessedNumber);
     fprintf(outputFile, "猜中了 %lld 個 password\n", hitNumber);
-    fprintf(outputFile, "breaking rate : %lf %%\n", (double)hitNumber/(double)ansSet.size());
+    fprintf(outputFile, "breaking rate : %lf %%\n", (double)hitNumber/(double)ansSet.size()*100.0);
     fclose(outputFile);
 }
 /* test 3->8 */
