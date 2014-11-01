@@ -10,20 +10,23 @@
 #include <iostream>
 using namespace std;
 #define uint8_t unsigned char
+const long long int TEST_LIMIT = 4000000000;
 extern void md5(const uint8_t *, size_t, uint8_t *);
 bool md5Test(const char *input, int length);
 void init(char *, char *);
 void loadDic(char *);
-void dicdfs(char *, int);
+void dicdfs(char *, int, bool);
 void dump();    //dump infomation to output file
 void loadAnsHash(char *);
 bool testString(char str[], int len);
+bool testStringV2(char str[], int len);
 long long int guessedNumber = 0;
 long long int hitNumber = 0;
 long long int totalNumber = 100;
 int *dfsMapping[11];
 bool optFlag;
 set<string> ansSet;
+set<string> secondSet;
 map<long long int, string> hitsMap;
 int main(int argc, char *argv[])
 {
@@ -45,6 +48,7 @@ int main(int argc, char *argv[])
 bool md5Test(const char *input, int length) {
     string retString = "";
     uint8_t result[16];
+    if (guessedNumber >= TEST_LIMIT) return false;
     md5((uint8_t *)input, length, result);
     guessedNumber++;
     for (int i = 0; i < 16; i++) {
@@ -111,21 +115,29 @@ void loadDic(char *path) {
         }
         if (isContainNotAlpha) {continue;}
         for (int i = 0; i < len; i++) tmpstr[i] = toupper(tmpstr[i]);
+        if (len == 10 || len == 9)
+            secondSet.insert((string)tmpstr);
         optFlag = false;
-        dicdfs(tmpstr, len);
+        dicdfs(tmpstr, len, false);
     }
     fclose(dic);
+    set<string>::iterator iter = secondSet.begin();
+    while (iter != secondSet.end() && guessedNumber < TEST_LIMIT) {
+        strcpy(tmpstr, iter->c_str());
+        dicdfs(tmpstr, iter->length(), true);
+    }
     for (int i = 0; i < 11; i++) {
         free(dfsMapping[i]);
     }
 }
 
 int stPT[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-int edPT[] = {9, 99, 999, 999, 999, 999, 999, 999, 999, 999, 999, 999};
+int edPT[] = {9, 99, 999, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500};
 bool testString(char str[], int len) {
     char rangeStr[20];
     int ind = 12 - len - 1;
     bool ishit = false;
+    if (guessedNumber >= TEST_LIMIT) return false;
     for (int range = stPT[ind]; range <= edPT[ind]; range++) {
         sprintf(rangeStr, "%s%d", str, range);
         ishit |= md5Test(rangeStr, strlen(rangeStr));
@@ -134,8 +146,37 @@ bool testString(char str[], int len) {
     }
     return ishit;
 }
+bool testStringV2(char str[], int len) {
+    char rangeStr[20];
+    int ind = 12 - len - 1;
+    bool ishit = false;
+    if (guessedNumber >= TEST_LIMIT) return false;
+    if (len == 10) {
+        for (int front = 0; front < 10; front++) {
+            for (int back = 0; back < 10; back++) {
+                sprintf(rangeStr, "%d%s%d", front, str, back);
+                ishit |= md5Test(rangeStr, strlen(rangeStr));
+            }
+        }
+    }
+    if (len == 9) {
+        for (int front = 0; front < 100 && ishit == false; front++) {
+            for (int back = 0; back < 10 && ishit == false; back++) {
+                sprintf(rangeStr, "%d%s%d", front, str, back);
+                ishit |= md5Test(rangeStr, strlen(rangeStr));
+            }
+        }
+        for (int front = 0; front < 10 && ishit == false; front++) {
+            for (int back = 0; back < 100 && ishit == false; back++) {
+                sprintf(rangeStr, "%d%s%d", front, str, back);
+                ishit |= md5Test(rangeStr, strlen(rangeStr));
+            }
+        }
+    }
+    return ishit;
+}
 // make upper and lower choice
-void dicdfs(char *str, int len) {
+void dicdfs(char *str, int len, bool isSecond) {
     if (totalNumber <= 0) {
         return ;
     }
@@ -150,7 +191,10 @@ void dicdfs(char *str, int len) {
             }
             tmpt = tmpt >> 1;
         }
-        optFlag = testString(ttstr, len);
+        if (isSecond)
+            optFlag = testStringV2(ttstr, len);
+        else
+            optFlag = testString(ttstr, len);
         if (optFlag)
             break;
     }
@@ -165,9 +209,8 @@ void dump() {
         fprintf(outputFile, "%s\t在第 %lld 個sequence 被猜中\n", iter->second.c_str(), iter->first);
     }
     fprintf(outputFile, "------------------------------------------\n");
-    fprintf(outputFile, "猜了 %lld 個 sequence\n", guessedNumber);
+    fprintf(outputFile, "猜了 %lld 個 sequence\n", TEST_LIMIT);
     fprintf(outputFile, "猜中了 %lld 個 password\n", hitNumber);
-    fprintf(outputFile, "breaking rate : %lf %%\n", (double)hitNumber/(double)guessedNumber);
+    fprintf(outputFile, "breaking rate : %lf %%\n", (double)hitNumber/(double)ansSet.size()*100.0);
     fclose(outputFile);
 }
-/* test 3->8 */
